@@ -52,7 +52,9 @@ sub parse_options {
     [ "conlog|l=s",   { DEFAULT  => '' } ],
     [
       "help|h", {
-        ACTION => sub { $self->{action} = 'show_help' }
+        ACTION => sub {
+          $self->{action} = 'show_help';
+          }
       }
     ], [
       "version|V", {
