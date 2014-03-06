@@ -253,7 +253,8 @@ sub show_version {
 sub safe_exit {
   my ($self) = @_;
 
-  $self->{log}->log_and_die(level => 'notice', message => 'Ending');
+  $self->{log}->notice('Exiting');
+  exit 0;
 }
 
 sub show_help {
