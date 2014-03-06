@@ -40,16 +40,16 @@ sub parse_options {
   my @args_copy = @args;    # make a copy as there are two calls to getopt
 
   my @configurable = (
-    [ "conf|f=s",                { VALIDATE => \&check_file } ],
-    [ "before|b=i",              { DEFAULT  => 2            } ],
-    [ "after|a=i",               { DEFAULT  => 2            } ],
-    [ "calls-path|calls_path=s", { DEFAULT  => 'calls'      } ],
-    [ "calls-freq|calls_freq=i", { DEFAULT  => 3600         } ],
-    [ "daemon|D!",               { DEFAULT  => 1            } ],
-    [ "mpd=s",                   { DEFAULT  => 'localhost'  } ],
-    [ "music-path|music_path=s", { DEFAULT  => 'music'      } ],
-    [ "syslog|s=s",              { DEFAULT  => ''           } ],
-    [ "conlog|l=s",              { DEFAULT  => ''           } ],
+    [ "conf|f=s",     { VALIDATE => \&check_file } ],
+    [ "before|b=i",   { DEFAULT  => 2            } ],
+    [ "after|a=i",    { DEFAULT  => 2            } ],
+    [ "calls-path=s", { DEFAULT  => 'calls'      } ],
+    [ "calls-freq=i", { DEFAULT  => 3600         } ],
+    [ "daemon|D!",    { DEFAULT  => 1            } ],
+    [ "mpd=s",        { DEFAULT  => 'localhost'  } ],
+    [ "music-path=s", { DEFAULT  => 'music'      } ],
+    [ "syslog|s=s",   { DEFAULT  => ''           } ],
+    [ "conlog|l=s",   { DEFAULT  => ''           } ],
     [
       "help|h", {
         ACTION => sub { $self->{action} = 'show_help' }
@@ -141,9 +141,9 @@ sub configure {
   $self->mpd->repeat(0);
   $self->mpd->random(0);
 
-  if ($self->{config}->calls_freq) {
+  if ($self->{config}->get('calls-freq')) {
     my $now = time;
-    $self->{last_call} = $now - $now % $self->{config}->calls_freq;
+    $self->{last_call} = $now - $now % $self->{config}->get('calls-freq');
     $self->{log}->notice("Set last call to $self->{last_call}");
   }
 }
@@ -156,11 +156,7 @@ sub update_cache {
   foreach my $category (('music', 'calls')) {
 
     @{ $self->{$category} } = grep { $_->{type} eq 'file' }
-      $self->mpd->list_all($self->{config}->get("${category}_path"));
-    #my $path = "${category}_path"
-    #  ;    # TODO:  Figure out how to not require putting in var first
-    #@{ $self->{$category} } = grep { $_->{type} eq 'file' }
-    #  $self->mpd->list_all($self->{config}->$path);
+      $self->mpd->list_all($self->{config}->get("${category}-path"));
 
     my $total = scalar(@{ $self->{$category} });
     if ($total) {
@@ -209,7 +205,7 @@ sub add_call {
   $self->add_random_item_from_category('calls', 'immediate');
 
   my $now = time;
-  $self->{last_call} = $now - $now % $self->{config}->calls_freq();
+  $self->{last_call} = $now - $now % $self->{config}->get('calls-freq');
   $self->{log}->info('Set last call to ' . $self->{last_call});
 }
 
@@ -232,8 +228,8 @@ sub add_random_item_from_category {
 sub time_for_call {
   my ($self) = @_;
 
-  return unless $self->{config}->calls_freq();
-  return time - $self->{last_call} > $self->{config}->calls_freq();
+  return unless $self->{config}->get('calls-freq');
+  return time - $self->{last_call} > $self->{config}->get('calls-freq');
 }
 
 sub check_file {
@@ -321,7 +317,7 @@ sub handle_message_mpdj {
 
   my ($option, $value) = split /\s+/, $message, 2;
 
-  if ($option =~ /^(?:before|after|calls_freq)$/) {
+  if ($option =~ /^(?:before|after|calls-freq)$/) {
     return unless $value =~ /^\d+$/;
     $self->{log}->info( sprintf ('Setting %s to %s (was %s)', 
       $option, $value, $self->{config}->$option));
