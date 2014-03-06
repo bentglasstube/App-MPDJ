@@ -41,15 +41,15 @@ sub parse_options {
 
   my @configurable = (
     [ "conf|f=s",                { VALIDATE => \&check_file } ],
-    [ "before|b=i",              { DEFAULT  => 2 } ],
-    [ "after|a=i",               { DEFAULT  => 2 } ],
-    [ "calls-path|calls_path=s", { DEFAULT  => 'calls' } ],
-    [ "calls-freq|calls_freq=i", { DEFAULT  => 3600 } ],
-    [ "daemon|D!",               { DEFAULT  => 1 } ],
-    [ "mpd=s",                   { DEFAULT  => 'localhost' } ],
-    [ "music-path|music_path=s", { DEFAULT  => 'music' } ],
-    [ "syslog|s=s",              { DEFAULT  => '' } ],
-    [ "conlog|l=s",              { DEFAULT  => '' } ],
+    [ "before|b=i",              { DEFAULT  => 2            } ],
+    [ "after|a=i",               { DEFAULT  => 2            } ],
+    [ "calls-path|calls_path=s", { DEFAULT  => 'calls'      } ],
+    [ "calls-freq|calls_freq=i", { DEFAULT  => 3600         } ],
+    [ "daemon|D!",               { DEFAULT  => 1            } ],
+    [ "mpd=s",                   { DEFAULT  => 'localhost'  } ],
+    [ "music-path|music_path=s", { DEFAULT  => 'music'      } ],
+    [ "syslog|s=s",              { DEFAULT  => ''           } ],
+    [ "conlog|l=s",              { DEFAULT  => ''           } ],
     [
       "help|h", {
         ACTION => sub { $self->{action} = 'show_help' }
@@ -261,7 +261,7 @@ Usage: mpdj [options]
 
 Options:
   --mpd             MPD connection string (password\@host:port)
-  -s, --syslog      Turns on syslog output (debug, info, notice, warn[ing], error, etc)
+  -s,--syslog       Turns on syslog output (debug, info, notice, warn[ing], error, etc)
   -l,--conlog       Turns on console output (same choices as --syslog)
   --no-daemon       Turn off daemonizing
   -b,--before       Number of songs to keep in playlist before current song
@@ -269,7 +269,7 @@ Options:
   -c,--calls-freq   Frequency to inject call signs in seconds
   --calls-path      Path to call sign files
   --music-path      Path to music files
-  -f, --conf        Config file to use instead of /etc/mpdj.conf
+  -f,--conf         Config file to use instead of /etc/mpdj.conf
   -V,--version      Show version information and exit
   -h,--help         Show this help and exit
 HELP
@@ -332,7 +332,7 @@ sub handle_message_mpdj {
 
 sub invocation_error {
 
-# TODO: Currently exits program after first error.  There may be more after this one to show.
+  # TODO: Currently exits program after first error.  There may be more after this one to show.
   say "error: @_";
 
   show_help;
@@ -425,7 +425,9 @@ Show this help and exit.
 
 =head1 CONFIGURATION FILES
 
-Lowest to highest priority: /etc/mpdj.conf or config file specified on command line, ~/.mpdjrc, and finally command line options.  Format of configuration file is the ini file format as supported by AppConfig.
+Lowest to highest priority: /etc/mpdj.conf or config file specified on command
+line, ~/.mpdjrc, and finally command line options.  Format of configuration file
+is the ini file format as supported by AppConfig.
 
 =head1 AUTHOR
 
