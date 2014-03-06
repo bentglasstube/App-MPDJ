@@ -6,7 +6,6 @@ use 5.010;
 
 our $VERSION = '1.07';
 
-use Getopt::Long;
 use Net::MPD;
 use Proc::Daemon;
 use Log::Dispatch;
