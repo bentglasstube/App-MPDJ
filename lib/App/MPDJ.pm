@@ -155,12 +155,12 @@ sub update_cache {
 
   foreach my $category (('music', 'calls')) {
 
-    #@{ $self->{$category} } = grep { $_->{type} eq 'file' }
-    #  $self->mpd->list_all($self->{config}->{"${category}_path"});
-    my $path = "${category}_path"
-      ;    # TODO:  Figure out how to not require putting in var first
     @{ $self->{$category} } = grep { $_->{type} eq 'file' }
-      $self->mpd->list_all($self->{config}->$path);
+      $self->mpd->list_all($self->{config}->get("${category}_path"));
+    #my $path = "${category}_path"
+    #  ;    # TODO:  Figure out how to not require putting in var first
+    #@{ $self->{$category} } = grep { $_->{type} eq 'file' }
+    #  $self->mpd->list_all($self->{config}->$path);
 
     my $total = scalar(@{ $self->{$category} });
     if ($total) {
@@ -321,11 +321,11 @@ sub handle_message_mpdj {
 
   my ($option, $value) = split /\s+/, $message, 2;
 
-  # TODO: Understand this.  Does it break with new config system
   if ($option =~ /^(?:before|after|calls_freq)$/) {
     return unless $value =~ /^\d+$/;
-    $self->{log}->info('Setting ' . $option . ' to ' . $value);
-    $self->{$option} = $value;
+    $self->{log}->info( sprintf ('Setting %s to %s (was %s)', 
+      $option, $value, $self->{config}->$option));
+    $self->{config}->$option($value);
     $self->player_changed();
   }
 }
