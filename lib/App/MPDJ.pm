@@ -14,15 +14,10 @@ use AppConfig;
 sub new {
   my ($class, @options) = @_;
 
-  my $config = AppConfig->new( {
-    ERROR => \&invocation_error,
-    CASE => 1,
-  } );
-
   my $self = bless {
     action     => undef,
     last_call  => 0,
-    config     => $config,
+    config_errors => [],
     @options
   }, $class;
 }
@@ -36,7 +31,10 @@ sub mpd {
 sub parse_options {
   my ($self, @args) = @_;
 
-  my @args_copy = @args;  # make a copy as there are two calls to getopt
+  $self->{config} = AppConfig->new( {
+    ERROR => sub { push @{$self->{config_errors}}, \@_; },
+    CASE => 1,
+  } );
 
   my @configurable = (
     [ "conf|f=s",     { VALIDATE => \&check_file } ],
@@ -68,7 +66,7 @@ sub parse_options {
       $self->{config}->define( $_->[0], $_->[1] );
   }
 
-  $self->{config}->getopt(\@args);  # to get --conf option, if any
+  $self->_getopt(@args);  # to get --conf option, if any
 
   foreach my $config ( ($self->{config}->conf || '/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc") ) {
     if (-e $config) {
@@ -79,7 +77,22 @@ sub parse_options {
     }
   }
 
-  $self->{config}->getopt(\@args_copy); # to override config file
+  $self->_getopt(@args); # to override config file
+}
+
+sub _getopt {
+  my ($self, @args) = @_;
+
+  $self->{config}->getopt([@args]); # do not consume @args
+
+  if (@{$self->{config_errors}}) {
+    foreach my $err (@{$self->{config_errors}}) {
+      printf STDERR @$err;
+      print STDERR "\n";
+    }
+    $self->show_help;
+    exit;
+  }
 }
 
 sub connect {
@@ -321,16 +334,6 @@ sub handle_message_mpdj {
     $self->{config}->$option($value);
     $self->player_changed();
   }
-}
-
-sub invocation_error {
-
-# TODO: Currently exits program after first error.  There may be more after this one to show.
-  say "error: @_";
-
-    show_help;
-
-    exit;
 }
 
 1;
