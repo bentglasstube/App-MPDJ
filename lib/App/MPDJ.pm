@@ -32,28 +32,26 @@ sub parse_options {
       ERROR => sub { push @{ $self->{config_errors} }, \@_; },
       CASE  => 1,
     },
-    'conf|f=s'     => { VALIDATE => sub { -e shift } },
-    'before|b=i'   => { DEFAULT  => 2 },
-    'after|a=i'    => { DEFAULT  => 2 },
-    'calls-path=s' => { DEFAULT  => 'calls' },
-    'calls-freq=i' => { DEFAULT  => 3600 },
-    'daemon|D!'    => { DEFAULT  => 1 },
-    'mpd=s'        => { DEFAULT  => 'localhost' },
-    'music-path=s' => { DEFAULT  => 'music' },
-    'syslog|s=s'   => { DEFAULT  => '' },
-    'conlog|l=s'   => { DEFAULT  => '' },
-    'help|h'       => {
-      ACTION => sub { $self->help }
+    'conf|f=s' => {
+      VALIDATE => sub { -e shift }
     },
-    'version|V' => {
-      ACTION => sub { $self->version }
-    },
-  );
+    'before|b=i'   => { DEFAULT => 2 },
+    'after|a=i'    => { DEFAULT => 2 },
+    'calls-path=s' => { DEFAULT => 'calls' },
+    'calls-freq=i' => { DEFAULT => 3600 },
+    'daemon|D!'    => { DEFAULT => 1 },
+    'mpd=s'        => { DEFAULT => 'localhost' },
+    'music-path=s' => { DEFAULT => 'music' },
+    'syslog|s=s'   => { DEFAULT => '' },
+    'conlog|l=s'   => { DEFAULT => '' },
+    'help|h'       => { ACTION  => \&help, },
+    'version|V'    => { ACTION  => \&version, });
 
   $self->_getopt(@args);    # to get --conf option, if any
 
-  my @configs = $self->config->get('conf') || ('/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc");
-  foreach my $config ( @configs ) {
+  my @configs =
+    $self->config->get('conf') || ('/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc");
+  foreach my $config (@configs) {
     if (-e $config) {
       say "Loading config ($config)" if $self->config->get('conlog');
       $self->config->file($config);
@@ -228,15 +226,11 @@ sub time_for_call {
 }
 
 sub version {
-  my ($self) = @_;
-
   say "mpdj (App::MPDJ) version $VERSION";
   exit;
 }
 
 sub help {
-  my ($self) = @_;
-
   print <<HELP;
 Usage: mpdj [options]
 
