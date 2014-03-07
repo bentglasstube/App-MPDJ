@@ -32,23 +32,21 @@ sub parse_options {
       ERROR => sub { push @{ $self->{config_errors} }, \@_; },
       CASE  => 1,
     },
-    "conf|f=s",     { VALIDATE => \&check_file },
-    "before|b=i",   { DEFAULT  => 2 },
-    "after|a=i",    { DEFAULT  => 2 },
-    "calls-path=s", { DEFAULT  => 'calls' },
-    "calls-freq=i", { DEFAULT  => 3600 },
-    "daemon|D!",    { DEFAULT  => 1 },
-    "mpd=s",        { DEFAULT  => 'localhost' },
-    "music-path=s", { DEFAULT  => 'music' },
-    "syslog|s=s",   { DEFAULT  => '' },
-    "conlog|l=s",   { DEFAULT  => '' },
-    "help|h", {
-      ACTION => sub { $self->show_help(); exit; }
+    'conf|f=s'     => { VALIDATE => \&check_file },
+    'before|b=i'   => { DEFAULT  => 2 },
+    'after|a=i'    => { DEFAULT  => 2 },
+    'calls-path=s' => { DEFAULT  => 'calls' },
+    'calls-freq=i' => { DEFAULT  => 3600 },
+    'daemon|D!'    => { DEFAULT  => 1 },
+    'mpd=s'        => { DEFAULT  => 'localhost' },
+    'music-path=s' => { DEFAULT  => 'music' },
+    'syslog|s=s'   => { DEFAULT  => '' },
+    'conlog|l=s'   => { DEFAULT  => '' },
+    'help|h'       => {
+      ACTION => sub { $self->help }
     },
-    "version|V", {
-      ACTION => sub {
-        $self->show_version(); exit;
-      }
+    'version|V' => {
+      ACTION => sub { $self->version }
     },
   );
 
@@ -78,8 +76,7 @@ sub _getopt {
       printf STDERR @$err;
       print STDERR "\n";
     }
-    $self->show_help;
-    exit;
+    $self->help;
   }
 }
 
@@ -233,10 +230,11 @@ sub check_file {
   return -e $_[1];
 }
 
-sub show_version {
+sub version {
   my ($self) = @_;
 
   say "mpdj (App::MPDJ) version $VERSION";
+  exit;
 }
 
 sub safe_exit {
@@ -246,7 +244,7 @@ sub safe_exit {
   exit 0;
 }
 
-sub show_help {
+sub help {
   my ($self) = @_;
 
   print <<HELP;
@@ -267,6 +265,7 @@ Options:
   -h,--help         Show this help and exit
 HELP
 
+  exit;
 }
 
 sub database_changed {
