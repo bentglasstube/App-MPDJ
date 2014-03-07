@@ -15,24 +15,24 @@ sub new {
   my ($class, @options) = @_;
 
   my $self = bless {
-    action     => undef,
-    last_call  => 0,
+    action        => undef,
+    last_call     => 0,
     config_errors => [],
     @options
   }, $class;
 }
 
-sub mpd { shift->{mpd} }
-sub log { shift->{log} }
+sub mpd    { shift->{mpd} }
+sub log    { shift->{log} }
 sub config { shift->{config} }
 
 sub parse_options {
   my ($self, @args) = @_;
 
-  $self->{config} = AppConfig->new( {
-    ERROR => sub { push @{$self->{config_errors}}, \@_; },
-    CASE => 1,
-  } );
+  $self->{config} = AppConfig->new({
+    ERROR => sub { push @{ $self->{config_errors} }, \@_; },
+    CASE  => 1,
+  });
 
   my @configurable = (
     [ "conf|f=s",     { VALIDATE => \&check_file } ],
@@ -61,30 +61,32 @@ sub parse_options {
   );
 
   foreach (@configurable) {
-      $self->config->define( $_->[0], $_->[1] );
+    $self->config->define($_->[0], $_->[1]);
   }
 
-  $self->_getopt(@args);  # to get --conf option, if any
+  $self->_getopt(@args);    # to get --conf option, if any
 
-  foreach my $config ( ($self->config->conf || '/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc") ) {
+  foreach
+    my $config (($self->config->conf || '/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc"))
+  {
     if (-e $config) {
-	say "Loading config ($config)" if $self->config->conlog;
+      say "Loading config ($config)" if $self->config->conlog;
       $self->config->file($config);
     } else {
       say "Config file skipped ($config)" if $self->config->conlog;
     }
   }
 
-  $self->_getopt(@args); # to override config file
+  $self->_getopt(@args);    # to override config file
 }
 
 sub _getopt {
   my ($self, @args) = @_;
 
-  $self->config->getopt([@args]); # do not consume @args
+  $self->config->getopt([@args]);    # do not consume @args
 
-  if (@{$self->{config_errors}}) {
-    foreach my $err (@{$self->{config_errors}}) {
+  if (@{ $self->{config_errors} }) {
+    foreach my $err (@{ $self->{config_errors} }) {
       printf STDERR @$err;
       print STDERR "\n";
     }
@@ -109,8 +111,12 @@ sub execute {
   @SIG{qw( INT TERM HUP )} = sub { $self->safe_exit() };
 
   my @loggers;
-  push @loggers, ( [ 'Screen', min_level => $self->config->conlog, newline => 1    ] ) if $self->config->conlog;
-  push @loggers, ( [ 'Syslog', min_level => $self->config->syslog, ident => 'mpdj' ] ) if $self->config->syslog;
+  push @loggers,
+    ([ 'Screen', min_level => $self->config->conlog, newline => 1 ])
+    if $self->config->conlog;
+  push @loggers,
+    ([ 'Syslog', min_level => $self->config->syslog, ident => 'mpdj' ])
+    if $self->config->syslog;
 
   $self->{log} = Log::Dispatch->new(outputs => \@loggers);
 
@@ -159,17 +165,17 @@ sub update_cache {
 
   $self->log->notice('Updating music and calls cache...');
 
-  foreach my $category ( ('music', 'calls') ) {
+  foreach my $category (('music', 'calls')) {
 
     @{ $self->{$category} } = grep { $_->{type} eq 'file' }
       $self->mpd->list_all($self->config->get("${category}-path"));
 
     my $total = scalar(@{ $self->{$category} });
     if ($total) {
-      $self->log
-        ->notice(sprintf("Total %s available: %d", $category, $total));
+      $self->log->notice(sprintf("Total %s available: %d", $category, $total));
     } else {
-      $self->log->warning("No $category available.  Path should be mpd path not file system.");
+      $self->log->warning(
+        "No $category available.  Path should be mpd path not file system.");
     }
   }
 }
@@ -217,7 +223,7 @@ sub add_call {
 sub add_random_item_from_category {
   my ($self, $category, $next) = @_;
 
-  my @items = @{$self->{$category}};
+  my @items = @{ $self->{$category} };
 
   my $index = int(rand(scalar @items));
   my $item  = $items[$index];
@@ -239,7 +245,7 @@ sub time_for_call {
 
 sub check_file {
 
-    return -e $_[1];
+  return -e $_[1];
 }
 
 sub show_version {
