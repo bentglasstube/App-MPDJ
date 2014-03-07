@@ -52,9 +52,8 @@ sub parse_options {
 
   $self->_getopt(@args);    # to get --conf option, if any
 
-  foreach my $config (
-    ($self->config->get('conf') || '/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc"))
-  {
+  my @configs = $self->config->get('conf') || ('/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc");
+  foreach my $config ( @configs ) {
     if (-e $config) {
       say "Loading config ($config)" if $self->config->get('conlog');
       $self->config->file($config);
@@ -260,7 +259,7 @@ Options:
   -c,--calls-freq   Frequency to inject call signs in seconds
   --calls-path      Path to call sign files
   --music-path      Path to music files
-  -f,--conf         Config file to use instead of /etc/mpdj.conf
+  -f,--conf         Config file to use
   -V,--version      Show version information and exit
   -h,--help         Show this help and exit
 HELP
@@ -395,7 +394,7 @@ Path to music files.  The default is 'music'.
 
 =item -f --conf
 
-Config file to use instead of /etc/mpdj.conf.
+Config file to use
 
 =item -V, --version
 
@@ -409,9 +408,11 @@ Show this help and exit.
 
 =head1 CONFIGURATION FILES
 
-Lowest to highest priority: /etc/mpdj.conf or config file specified on command
-line, ~/.mpdjrc, and finally command line options.  Format of configuration file
-is the ini file format as supported by AppConfig.
+The configuration file is formatted as an INI file.  See L<AppConfig> for
+details.  If no configuration file is given, the file C</etc/mpdj.conf> will be
+read (if it exists) followed by the file C<~/.mpdjrc> (if it exists).  The
+values in the latter file will override anything in the first file.  Command
+line parameters will override anything given in any configuration file.
 
 =head1 AUTHOR
 
