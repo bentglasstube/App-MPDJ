@@ -29,9 +29,9 @@ sub parse_options {
   my ($self, @args) = @_;
 
   $self->{config} = AppConfig->new({
-    ERROR => sub { push @{ $self->{config_errors} }, \@_; },
-    CASE  => 1,
-  },
+      ERROR => sub { push @{ $self->{config_errors} }, \@_; },
+      CASE  => 1,
+    },
     [ "conf|f=s",     { VALIDATE => \&check_file } ],
     [ "before|b=i",   { DEFAULT  => 2 } ],
     [ "after|a=i",    { DEFAULT  => 2 } ],
@@ -44,23 +44,21 @@ sub parse_options {
     [ "conlog|l=s",   { DEFAULT  => '' } ],
     [
       "help|h", {
-        ACTION => sub {
-          $self->show_help();
-          exit;
+        ACTION => sub { $self->show_help(); exit; }
       }
     ], [
       "version|V", {
         ACTION => sub {
-          $self->show_version();
-          exit;
+          $self->show_version(); exit;
+          }
       }
     ],
   );
 
   $self->_getopt(@args);    # to get --conf option, if any
 
-  foreach
-    my $config (($self->config->get('conf') || '/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc"))
+  foreach my $config (
+    ($self->config->get('conf') || '/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc"))
   {
     if (-e $config) {
       say "Loading config ($config)" if $self->config->get('conlog');
@@ -184,7 +182,8 @@ sub add_new_songs {
   my ($self) = @_;
 
   my $song = $self->mpd->song || 0;
-  my $count = $self->config->get('after') + $song - $self->mpd->playlist_length + 1;
+  my $count =
+    $self->config->get('after') + $song - $self->mpd->playlist_length + 1;
   if ($count > 0) {
     $self->log->info("Adding $count new songs");
     $self->add_song for 1 .. $count;
@@ -323,8 +322,7 @@ sub handle_message_mpdj {
     $self->log->info(
       sprintf(
         'Setting %s to %s (was %s)',
-        $option, $value, $self->config->get($option)
-      ));
+        $option, $value, $self->config->get($option)));
     $self->config->set($option, $value);
     $self->player_changed();
   }
