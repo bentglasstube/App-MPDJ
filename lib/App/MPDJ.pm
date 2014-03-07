@@ -32,27 +32,24 @@ sub parse_options {
       ERROR => sub { push @{ $self->{config_errors} }, \@_; },
       CASE  => 1,
     },
-    [ "conf|f=s",     { VALIDATE => \&check_file } ],
-    [ "before|b=i",   { DEFAULT  => 2 } ],
-    [ "after|a=i",    { DEFAULT  => 2 } ],
-    [ "calls-path=s", { DEFAULT  => 'calls' } ],
-    [ "calls-freq=i", { DEFAULT  => 3600 } ],
-    [ "daemon|D!",    { DEFAULT  => 1 } ],
-    [ "mpd=s",        { DEFAULT  => 'localhost' } ],
-    [ "music-path=s", { DEFAULT  => 'music' } ],
-    [ "syslog|s=s",   { DEFAULT  => '' } ],
-    [ "conlog|l=s",   { DEFAULT  => '' } ],
-    [
-      "help|h", {
-        ACTION => sub { $self->show_help(); exit; }
+    "conf|f=s",     { VALIDATE => \&check_file },
+    "before|b=i",   { DEFAULT  => 2 },
+    "after|a=i",    { DEFAULT  => 2 },
+    "calls-path=s", { DEFAULT  => 'calls' },
+    "calls-freq=i", { DEFAULT  => 3600 },
+    "daemon|D!",    { DEFAULT  => 1 },
+    "mpd=s",        { DEFAULT  => 'localhost' },
+    "music-path=s", { DEFAULT  => 'music' },
+    "syslog|s=s",   { DEFAULT  => '' },
+    "conlog|l=s",   { DEFAULT  => '' },
+    "help|h", {
+      ACTION => sub { $self->show_help(); exit; }
+    },
+    "version|V", {
+      ACTION => sub {
+        $self->show_version(); exit;
       }
-    ], [
-      "version|V", {
-        ACTION => sub {
-          $self->show_version(); exit;
-          }
-      }
-    ],
+    },
   );
 
   $self->_getopt(@args);    # to get --conf option, if any
