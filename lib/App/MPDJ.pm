@@ -15,7 +15,6 @@ sub new {
   my ($class, @options) = @_;
 
   my $self = bless {
-    action        => undef,
     last_call     => 0,
     config_errors => [],
     @options
@@ -46,14 +45,14 @@ sub parse_options {
     [
       "help|h", {
         ACTION => sub {
-          $self->{action} = 'show_help';
-          }
+          $self->show_help();
+          exit;
       }
     ], [
       "version|V", {
         ACTION => sub {
-          $self->{action} = 'show_version';
-          }
+          $self->show_version();
+          exit;
       }
     ],
   );
@@ -97,10 +96,6 @@ sub connect {
 
 sub execute {
   my ($self) = @_;
-
-  if (my $action = $self->{action}) {
-    $self->$action() and return 1;
-  }
 
   @SIG{qw( INT TERM HUP )} = sub { $self->safe_exit() };
 
