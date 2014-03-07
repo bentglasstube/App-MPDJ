@@ -32,9 +32,7 @@ sub parse_options {
   $self->{config} = AppConfig->new({
     ERROR => sub { push @{ $self->{config_errors} }, \@_; },
     CASE  => 1,
-  });
-
-  my @configurable = (
+  },
     [ "conf|f=s",     { VALIDATE => \&check_file } ],
     [ "before|b=i",   { DEFAULT  => 2 } ],
     [ "after|a=i",    { DEFAULT  => 2 } ],
@@ -60,20 +58,16 @@ sub parse_options {
     ],
   );
 
-  foreach (@configurable) {
-    $self->config->define($_->[0], $_->[1]);
-  }
-
   $self->_getopt(@args);    # to get --conf option, if any
 
   foreach
-    my $config (($self->config->conf || '/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc"))
+    my $config (($self->config->get('conf') || '/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc"))
   {
     if (-e $config) {
-      say "Loading config ($config)" if $self->config->conlog;
+      say "Loading config ($config)" if $self->config->get('conlog');
       $self->config->file($config);
     } else {
-      say "Config file skipped ($config)" if $self->config->conlog;
+      say "Config file skipped ($config)" if $self->config->get('conlog');
     }
   }
 
@@ -98,7 +92,7 @@ sub _getopt {
 sub connect {
   my ($self) = @_;
 
-  $self->{mpd} = Net::MPD->connect($self->config->mpd());
+  $self->{mpd} = Net::MPD->connect($self->config->get('mpd'));
 }
 
 sub execute {
@@ -112,15 +106,15 @@ sub execute {
 
   my @loggers;
   push @loggers,
-    ([ 'Screen', min_level => $self->config->conlog, newline => 1 ])
-    if $self->config->conlog;
+    ([ 'Screen', min_level => $self->config->get('conlog'), newline => 1 ])
+    if $self->config->get('conlog');
   push @loggers,
-    ([ 'Syslog', min_level => $self->config->syslog, ident => 'mpdj' ])
-    if $self->config->syslog;
+    ([ 'Syslog', min_level => $self->config->get('syslog'), ident => 'mpdj' ])
+    if $self->config->get('syslog');
 
   $self->{log} = Log::Dispatch->new(outputs => \@loggers);
 
-  if ($self->config->daemon) {
+  if ($self->config->get('daemon')) {
     $self->log->notice('Forking to background');
     Proc::Daemon::Init;
   }
@@ -184,7 +178,7 @@ sub remove_old_songs {
   my ($self) = @_;
 
   my $song = $self->mpd->song || 0;
-  my $count = $song - $self->config->before;
+  my $count = $song - $self->config->get('before');
   if ($count > 0) {
     $self->log->info("Deleting $count old songs");
     $self->mpd->delete("0:$count");
@@ -195,7 +189,7 @@ sub add_new_songs {
   my ($self) = @_;
 
   my $song = $self->mpd->song || 0;
-  my $count = $self->config->after + $song - $self->mpd->playlist_length + 1;
+  my $count = $self->config->get('after') + $song - $self->mpd->playlist_length + 1;
   if ($count > 0) {
     $self->log->info("Adding $count new songs");
     $self->add_song for 1 .. $count;
@@ -334,9 +328,9 @@ sub handle_message_mpdj {
     $self->log->info(
       sprintf(
         'Setting %s to %s (was %s)',
-        $option, $value, $self->config->$option
+        $option, $value, $self->config->get($option)
       ));
-    $self->config->$option($value);
+    $self->config->set($option, $value);
     $self->player_changed();
   }
 }
