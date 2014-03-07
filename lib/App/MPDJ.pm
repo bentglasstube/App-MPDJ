@@ -86,7 +86,7 @@ sub connect {
 sub execute {
   my ($self) = @_;
 
-  @SIG{qw( INT TERM HUP )} = sub {
+  local @SIG{qw( INT TERM HUP )} = sub {
     $self->log->notice('Exiting');
     exit 0;
   };
@@ -153,7 +153,7 @@ sub update_cache {
 
     my $total = scalar(@{ $self->{$category} });
     if ($total) {
-      $self->log->notice(sprintf("Total %s available: %d", $category, $total));
+      $self->log->notice(sprintf 'Total %s available: %d', $category, $total);
     } else {
       $self->log->warning(
         "No $category available.  Path should be mpd path not file system.");
@@ -207,7 +207,7 @@ sub add_random_item_from_category {
 
   my @items = @{ $self->{$category} };
 
-  my $index = int(rand(scalar @items));
+  my $index = int rand scalar @items;
   my $item  = $items[$index];
 
   my $uri  = $item->{uri};
@@ -231,11 +231,11 @@ sub version {
 }
 
 sub help {
-  print <<HELP;
+  print <<'HELP';
 Usage: mpdj [options]
 
 Options:
-  --mpd             MPD connection string (password\@host:port)
+  --mpd             MPD connection string (password@host:port)
   -s,--syslog       Turns on syslog output (debug, info, notice, warn[ing], error, etc)
   -l,--conlog       Turns on console output (same choices as --syslog)
   --no-daemon       Turn off daemonizing
@@ -297,12 +297,10 @@ sub handle_message_mpdj {
 
   my ($option, $value) = split /\s+/, $message, 2;
 
-  if ($option =~ /^(?:before|after|calls-freq)$/) {
+  if ($option eq 'before' or $option eq 'after' or $option eq 'calls-freq') {
     return unless $value =~ /^\d+$/;
-    $self->log->info(
-      sprintf(
-        'Setting %s to %s (was %s)',
-        $option, $value, $self->config->get($option)));
+    $self->log->info(sprintf 'Setting %s to %s (was %s)',
+      $option, $value, $self->config->get($option));
     $self->config->set($option, $value);
     $self->player_changed();
   }
