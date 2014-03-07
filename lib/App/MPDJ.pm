@@ -32,7 +32,7 @@ sub parse_options {
       ERROR => sub { push @{ $self->{config_errors} }, \@_; },
       CASE  => 1,
     },
-    'conf|f=s'     => { VALIDATE => \&check_file },
+    'conf|f=s'     => { VALIDATE => sub { -e shift } },
     'before|b=i'   => { DEFAULT  => 2 },
     'after|a=i'    => { DEFAULT  => 2 },
     'calls-path=s' => { DEFAULT  => 'calls' },
@@ -88,7 +88,10 @@ sub connect {
 sub execute {
   my ($self) = @_;
 
-  @SIG{qw( INT TERM HUP )} = sub { $self->safe_exit() };
+  @SIG{qw( INT TERM HUP )} = sub {
+    $self->log->notice('Exiting');
+    exit 0;
+  };
 
   my @loggers;
   push @loggers,
@@ -224,23 +227,11 @@ sub time_for_call {
   return time - $self->{last_call} > $self->config->get('calls-freq');
 }
 
-sub check_file {
-
-  return -e $_[1];
-}
-
 sub version {
   my ($self) = @_;
 
   say "mpdj (App::MPDJ) version $VERSION";
   exit;
-}
-
-sub safe_exit {
-  my ($self) = @_;
-
-  $self->log->notice('Exiting');
-  exit 0;
 }
 
 sub help {
