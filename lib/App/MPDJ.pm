@@ -22,11 +22,9 @@ sub new {
   }, $class;
 }
 
-sub mpd {
-  my ($self) = @_;
-
-  $self->{mpd};
-}
+sub mpd { shift->{mpd} }
+sub log { shift->{log} }
+sub config { shift->{config} }
 
 sub parse_options {
   my ($self, @args) = @_;
@@ -63,17 +61,17 @@ sub parse_options {
   );
 
   foreach (@configurable) {
-      $self->{config}->define( $_->[0], $_->[1] );
+      $self->config->define( $_->[0], $_->[1] );
   }
 
   $self->_getopt(@args);  # to get --conf option, if any
 
-  foreach my $config ( ($self->{config}->conf || '/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc") ) {
+  foreach my $config ( ($self->config->conf || '/etc/mpdj.conf', "$ENV{HOME}/.mpdjrc") ) {
     if (-e $config) {
-	say "Loading config ($config)" if $self->{config}->conlog;
-      $self->{config}->file($config);
+	say "Loading config ($config)" if $self->config->conlog;
+      $self->config->file($config);
     } else {
-      say "Config file skipped ($config)" if $self->{config}->conlog;
+      say "Config file skipped ($config)" if $self->config->conlog;
     }
   }
 
@@ -83,7 +81,7 @@ sub parse_options {
 sub _getopt {
   my ($self, @args) = @_;
 
-  $self->{config}->getopt([@args]); # do not consume @args
+  $self->config->getopt([@args]); # do not consume @args
 
   if (@{$self->{config_errors}}) {
     foreach my $err (@{$self->{config_errors}}) {
@@ -98,7 +96,7 @@ sub _getopt {
 sub connect {
   my ($self) = @_;
 
-  $self->{mpd} = Net::MPD->connect($self->{config}->mpd());
+  $self->{mpd} = Net::MPD->connect($self->config->mpd());
 }
 
 sub execute {
@@ -111,13 +109,13 @@ sub execute {
   @SIG{qw( INT TERM HUP )} = sub { $self->safe_exit() };
 
   my @loggers;
-  push @loggers, ( [ 'Screen', min_level => $self->{config}->conlog, newline => 1    ] ) if $self->{config}->conlog;
-  push @loggers, ( [ 'Syslog', min_level => $self->{config}->syslog, ident => 'mpdj' ] ) if $self->{config}->syslog;
+  push @loggers, ( [ 'Screen', min_level => $self->config->conlog, newline => 1    ] ) if $self->config->conlog;
+  push @loggers, ( [ 'Syslog', min_level => $self->config->syslog, ident => 'mpdj' ] ) if $self->config->syslog;
 
   $self->{log} = Log::Dispatch->new(outputs => \@loggers);
 
-  if ($self->{config}->daemon) {
-    $self->{log}->notice('Forking to background');
+  if ($self->config->daemon) {
+    $self->log->notice('Forking to background');
     Proc::Daemon::Init;
   }
 
@@ -129,7 +127,7 @@ sub execute {
   $self->update_cache;
 
   while (1) {
-    $self->{log}->debug('Waiting');
+    $self->log->debug('Waiting');
     my @changes =
       $self->mpd->idle(qw(database player playlist message options));
     $self->mpd->update_status();
@@ -144,34 +142,34 @@ sub execute {
 sub configure {
   my ($self) = @_;
 
-  $self->{log}->notice('Configuring MPD server');
+  $self->log->notice('Configuring MPD server');
 
   $self->mpd->repeat(0);
   $self->mpd->random(0);
 
-  if ($self->{config}->get('calls-freq')) {
+  if ($self->config->get('calls-freq')) {
     my $now = time;
-    $self->{last_call} = $now - $now % $self->{config}->get('calls-freq');
-    $self->{log}->notice("Set last call to $self->{last_call}");
+    $self->{last_call} = $now - $now % $self->config->get('calls-freq');
+    $self->log->notice("Set last call to $self->{last_call}");
   }
 }
 
 sub update_cache {
   my ($self) = @_;
 
-  $self->{log}->notice('Updating music and calls cache...');
+  $self->log->notice('Updating music and calls cache...');
 
   foreach my $category ( ('music', 'calls') ) {
 
     @{ $self->{$category} } = grep { $_->{type} eq 'file' }
-      $self->mpd->list_all($self->{config}->get("${category}-path"));
+      $self->mpd->list_all($self->config->get("${category}-path"));
 
     my $total = scalar(@{ $self->{$category} });
     if ($total) {
-      $self->{log}
+      $self->log
         ->notice(sprintf("Total %s available: %d", $category, $total));
     } else {
-      $self->{log}->warning("No $category available.  Path should be mpd path not file system.");
+      $self->log->warning("No $category available.  Path should be mpd path not file system.");
     }
   }
 }
@@ -180,9 +178,9 @@ sub remove_old_songs {
   my ($self) = @_;
 
   my $song = $self->mpd->song || 0;
-  my $count = $song - $self->{config}->before;
+  my $count = $song - $self->config->before;
   if ($count > 0) {
-    $self->{log}->info("Deleting $count old songs");
+    $self->log->info("Deleting $count old songs");
     $self->mpd->delete("0:$count");
   }
 }
@@ -191,9 +189,9 @@ sub add_new_songs {
   my ($self) = @_;
 
   my $song = $self->mpd->song || 0;
-  my $count = $self->{config}->after + $song - $self->mpd->playlist_length + 1;
+  my $count = $self->config->after + $song - $self->mpd->playlist_length + 1;
   if ($count > 0) {
-    $self->{log}->info("Adding $count new songs");
+    $self->log->info("Adding $count new songs");
     $self->add_song for 1 .. $count;
   }
 }
@@ -207,13 +205,13 @@ sub add_song {
 sub add_call {
   my ($self) = @_;
 
-  $self->{log}->info('Injecting call');
+  $self->log->info('Injecting call');
 
   $self->add_random_item_from_category('calls', 'immediate');
 
   my $now = time;
-  $self->{last_call} = $now - $now % $self->{config}->get('calls-freq');
-  $self->{log}->info('Set last call to ' . $self->{last_call});
+  $self->{last_call} = $now - $now % $self->config->get('calls-freq');
+  $self->log->info('Set last call to ' . $self->{last_call});
 }
 
 sub add_random_item_from_category {
@@ -227,7 +225,7 @@ sub add_random_item_from_category {
   my $uri  = $item->{uri};
   my $song = $self->mpd->song || 0;
   my $pos  = $next ? $song + 1 : $self->mpd->playlist_length;
-  $self->{log}->info('Adding ' . $uri . ' at position ' . $pos);
+  $self->log->info('Adding ' . $uri . ' at position ' . $pos);
 
   $self->mpd->add_id($uri, $pos);
 }
@@ -235,8 +233,8 @@ sub add_random_item_from_category {
 sub time_for_call {
   my ($self) = @_;
 
-  return unless $self->{config}->get('calls-freq');
-  return time - $self->{last_call} > $self->{config}->get('calls-freq');
+  return unless $self->config->get('calls-freq');
+  return time - $self->{last_call} > $self->config->get('calls-freq');
 }
 
 sub check_file {
@@ -253,7 +251,7 @@ sub show_version {
 sub safe_exit {
   my ($self) = @_;
 
-  $self->{log}->notice('Exiting');
+  $self->log->notice('Exiting');
   exit 0;
 }
 
@@ -314,7 +312,7 @@ sub message_changed {
 sub options_changed {
   my $self = shift;
 
-  $self->{log}->notice('Resetting configuration');
+  $self->log->notice('Resetting configuration');
 
   $self->mpd->repeat(0);
   $self->mpd->random(0);
@@ -327,12 +325,12 @@ sub handle_message_mpdj {
 
   if ($option =~ /^(?:before|after|calls-freq)$/) {
     return unless $value =~ /^\d+$/;
-    $self->{log}->info(
+    $self->log->info(
       sprintf(
         'Setting %s to %s (was %s)',
-        $option, $value, $self->{config}->$option
+        $option, $value, $self->config->$option
       ));
-    $self->{config}->$option($value);
+    $self->config->$option($value);
     $self->player_changed();
   }
 }
