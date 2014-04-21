@@ -4,7 +4,7 @@
       "Alan Berndt <alan@eatabrick.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Milla version v1.0.3, Dist::Zilla version 4.300035, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Dist::Milla version v1.0.4, Dist::Zilla version 4.300037, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "perl_5"
    ],
@@ -36,7 +36,7 @@
       },
       "runtime" : {
          "requires" : {
-            "Getopt::Long" : "0",
+            "AppConfig" : "0",
             "Log::Dispatch" : "0",
             "Net::MPD" : "0",
             "Proc::Daemon" : "0",
@@ -61,7 +61,7 @@
          "web" : "https://github.com/bentglasstube/App-MPDJ"
       }
    },
-   "version" : "1.07",
+   "version" : "1.08",
    "x_contributors" : [
       "johna <johna@sordid.slotcar.prv>"
    ]

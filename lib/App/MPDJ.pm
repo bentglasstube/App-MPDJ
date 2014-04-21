@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use 5.010;
 
-our $VERSION = '1.07';
+our $VERSION = '1.08';
 
 use Net::MPD;
 use Proc::Daemon;

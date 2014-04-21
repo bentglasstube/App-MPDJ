@@ -6,7 +6,7 @@ App::MPDJ - MPD DJ.
 
     > mpdj
     > mpdj --before 2 --after 6
-    > mpdj --no-daemon --verbose
+    > mpdj --no-daemon --conlog info
 
 # DESCRIPTION
 
@@ -61,7 +61,7 @@ of random songs for you just like a real DJ.
 
 - \-f --conf
 
-    Config file to use instead of /etc/mpdj.conf.
+    Config file to use
 
 - \-V, --version
 
@@ -73,9 +73,11 @@ of random songs for you just like a real DJ.
 
 # CONFIGURATION FILES
 
-Lowest to highest priority: /etc/mpdj.conf or config file specified on command
-line, ~/.mpdjrc, and finally command line options. Format of configuration file is
-the ini file format as supported by AppConfig.
+The configuration file is formatted as an INI file.  See [AppConfig](http://search.cpan.org/perldoc?AppConfig) for
+details.  If no configuration file is given, the file `/etc/mpdj.conf` will be
+read (if it exists) followed by the file `~/.mpdjrc` (if it exists).  The
+values in the latter file will override anything in the first file.  Command
+line parameters will override anything given in any configuration file.
 
 # AUTHOR
 
